@@ -1,1 +1,9 @@
 env/
+
+__pycache__/
+
+setting.py
+
+.sqlite3
+
+.env
