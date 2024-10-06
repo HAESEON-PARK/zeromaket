@@ -1,0 +1,17 @@
+<!-- manager/templates/manager/user_create.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>사용자 추가</title>
+</head>
+<body>
+    <h1>사용자 추가</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">사용자 추가</button>
+    </form>
+    <a href="{% url 'user_list' %}">사용자 목록으로 돌아가기</a>
+</body>
+</html>
