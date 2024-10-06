@@ -1,7 +1,9 @@
 # forms.py
 from django import forms
 from .models import Users
-from .models import Wholesalers
+from .models import Wholesaler
+from .models import TotalProducts
+from .models import Buyer
 
 # User 사용자 추가 폼 정의
 class UserCreateForm(forms.ModelForm):
@@ -26,14 +28,23 @@ class UserCreateForm(forms.ModelForm):
         }
 
 # Wholesaler 추가 폼 정의
-class WholesalerCreateForm(forms.ModelForm):
+class WholesalerForm(forms.ModelForm):
     class Meta:
-        model = Wholesalers
-        fields = ['name', 'contact_info', 'status', 'approve_status']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '이름'}),
-            'contact_info': forms.Textarea(attrs={'class': 'form-control', 'placeholder': '연락 정보'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'approve_status': forms.Select(attrs={'class': 'form-control'}),
-        }
+        model = Wholesaler
+        fields = ['user', 'company_name', 'company_phone', 'company_address', 'business_registration_number', 'business_registration_certificate', 'bank_account', 'reliability_score']
+
+
+# totalproducts CRUD 제어 폼 정의
+class TotalProductsForm(forms.ModelForm):
+    class Meta:
+        model = TotalProducts
+        fields = ['name', 'price', 'stock', 'description']
+
+
+
+class BuyerForm(forms.ModelForm):
+    class Meta:
+        model = Buyer
+        fields = ['user', 'company_name', 'company_phone', 'company_address', 'email', 'kakao_id', 'services', 'business_registration_number', 'business_registration_certificate', 'bank_account', 'manager_name', 'manager_phone', 'purchase_products', 'status', 'approve_status']
+
 

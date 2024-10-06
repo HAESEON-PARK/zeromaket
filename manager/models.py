@@ -3,7 +3,7 @@ from django.db import models
 
 # ENUM 타입 정의
 USER_JOB_TYPE_CHOICES = [
-    ('wholesaler', 'Wholesaler'),
+    ('Wholesaler', 'Wholesaler'),
     ('buyer', 'Buyer'),
     ('customer', 'Customer'),
     ('manager', 'Manager'),
@@ -95,17 +95,23 @@ class Users(models.Model):
         return self.name
 
 
-class Wholesalers(models.Model):
-    user = models.OneToOneField(Users, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, unique=True)
-    contact_info = models.JSONField()
-    status = models.CharField(max_length=50, choices=BUSINESS_STATUS_CHOICES, default='open')
-    approve_status = models.CharField(max_length=50, choices=BUSINESS_APPROVE_STATUS_CHOICES, default='hold')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+class Wholesaler(models.Model):
+    user = models.OneToOneField('Users', on_delete=models.CASCADE)  # 사용자와 일대일 관계
+    company_name = models.CharField(max_length=255)  # 회사 이름
+    company_phone = models.CharField(max_length=20, null=True, blank=True)  # 회사 전화번호 (옵션)
+    company_address = models.CharField(max_length=255, null=True, blank=True)  # 회사 주소 (옵션)
+    business_registration_number = models.CharField(max_length=50, unique=True, null=True, blank=True)  # 사업자 등록번호 (옵션)
+    business_registration_certificate = models.BinaryField(null=True, blank=True)  # 사업자 등록증 (옵션)
+    bank_account = models.CharField(max_length=100, null=True, blank=True)  # 은행 계좌 정보 (옵션)
+    reliability_score = models.IntegerField(default=100)  # 신뢰도 점수
+    created_at = models.DateTimeField(auto_now_add=True)  # 생성 시간
+    updated_at = models.DateTimeField(auto_now=True)  # 수정 시간
 
     def __str__(self):
-        return self.name
+        return self.company_name
+
+
+
 
 
 class TotalProducts(models.Model):
@@ -177,7 +183,7 @@ class Customer(models.Model):
 class Quotations(models.Model):
     buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, null=True, blank=True)
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, null=True, blank=True)
-    supplier = models.ForeignKey(Wholesalers, on_delete=models.CASCADE)
+    supplier = models.ForeignKey(Wholesaler, on_delete=models.CASCADE)
     total_amount = models.DecimalField(max_digits=15, decimal_places=2)
     details = models.JSONField()
     status = models.CharField(max_length=50, choices=[
@@ -216,7 +222,7 @@ class SyncLogs(models.Model):
 
 class Products(models.Model):
     total_product = models.ForeignKey(TotalProducts, on_delete=models.CASCADE)
-    wholesaler = models.ForeignKey(Wholesalers, on_delete=models.CASCADE)
+    wholesaler = models.ForeignKey(Wholesaler, on_delete=models.CASCADE)
     product_data = models.JSONField()
     update_date = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=50, choices=PRODUCT_STATUS_CHOICES, default='new')
@@ -231,7 +237,7 @@ class Products(models.Model):
 
 
 class SaleProducts(models.Model):
-    wholesaler = models.ForeignKey(Wholesalers, on_delete=models.CASCADE)
+    wholesaler = models.ForeignKey(Wholesaler, on_delete=models.CASCADE)
     product = models.ForeignKey(Products, on_delete=models.CASCADE)
     sale_status = models.CharField(max_length=50, choices=SALE_STATUS_CHOICES, default='new')
     updated_at = models.DateTimeField(auto_now=True)

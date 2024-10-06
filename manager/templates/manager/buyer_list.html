@@ -1,0 +1,41 @@
+- `buyer_list.html`: 구매자 목록을 보여주는 템플릿
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buyer List</title>
+</head>
+<body>
+    <h1>Buyer List</h1>
+    <a href="{% url 'buyer_create' %}">Add Buyer</a>
+    <ul>
+        {% for buyer in buyers %}
+            <li>
+                {{ buyer.company_name }} - {{ buyer.email }}
+                <a href="{% url 'buyer_update' buyer.pk %}">Edit</a>
+                <a href="{% url 'buyer_delete' buyer.pk %}">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+```
+
+- `buyer_form.html`: 구매자 생성 및 수정에 사용되는 템플릿
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Buyer Form</title>
+</head>
+<body>
+    <h1>Buyer Form</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>

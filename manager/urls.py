@@ -2,7 +2,7 @@
 from django.urls import path
 from . import views
 
-#Url 설청, 패턴정의
+#Url 설정, 패턴정의
 urlpatterns = [
     path('', views.index, name='manager_index'),  # 기본 루트 URL을 manager 앱의 index 뷰에 연결
 ]
@@ -39,16 +39,34 @@ urlpatterns = [
 ]
 
 
-# Wholesalers 모델 CRUD 구현
+# Wholesaler 모델 CRUD 구현
 urlpatterns = [
     path('', views.index, name='manager_index'),
     path('users/', views.user_list, name='user_list'),
     path('users/create/', views.add_user, name='add_user'),
     # Wholesaler 관련 URL
-    path('wholesalers/', views.wholesaler_list, name='wholesaler_list'),
-    path('wholesalers/create/', views.wholesaler_create, name='wholesaler_create'),
-    path('wholesalers/<int:pk>/', views.wholesaler_detail, name='wholesaler_detail'),
-    path('wholesalers/<int:pk>/update/', views.wholesaler_update, name='wholesaler_update'),
-    path('wholesalers/<int:pk>/delete/', views.wholesaler_delete, name='wholesaler_delete'),
+    path('wholesaler/', views.wholesaler_list, name='wholesaler_list'),
+    path('wholesaler/create/', views.wholesaler_create, name='wholesaler_create'),
+    path('wholesaler/update/<int:pk>/', views.wholesaler_update, name='wholesaler_update'),
+    path('wholesaler/delete/<int:pk>/', views.wholesaler_delete, name='wholesaler_delete'),
 ]
 
+# totalproducts CRUD 구현
+urlpatterns = [
+    path('', views.product_list, name='product_list'),
+    path('create/', views.product_create, name='product_create'),
+    path('update/<int:pk>/', views.product_update, name='product_update'),
+    path('delete/<int:pk>/', views.product_delete, name='product_delete'),
+]
+
+# Buyer CRUD 구현
+urlpatterns = [
+    path('', views.index, name='manager_index'),
+    path('users/', views.user_list, name='user_list'),
+    path('users/create/', views.add_user, name='add_user'),
+    # buyer 관련 URL    
+    path('', views.buyer_list, name='buyer_list'),
+    path('create/', views.buyer_create, name='buyer_create'),
+    path('update/<int:pk>/', views.buyer_update, name='buyer_update'),
+    path('delete/<int:pk>/', views.buyer_delete, name='buyer_delete'),
+]

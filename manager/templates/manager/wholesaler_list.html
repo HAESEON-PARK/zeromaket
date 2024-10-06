@@ -1,0 +1,39 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wholesaler List</title>
+</head>
+<body>
+    <h1>Wholesaler List</h1>
+    <a href="{% url 'wholesaler_create' %}">Add Wholesaler</a>
+    <ul>
+        {% for wholesaler in wholesalers %}
+            <li>
+                {{ wholesaler.company_name }} - {{ wholesaler.company_phone }}
+                <a href="{% url 'wholesaler_update' wholesaler.pk %}">Edit</a>
+                <a href="{% url 'wholesaler_delete' wholesaler.pk %}">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
+```
+
+- `wholesaler_form.html`: 도매업자 생성 및 수정에 사용되는 템플릿
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wholesaler Form</title>
+</head>
+<body>
+    <h1>Wholesaler Form</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+</body>
+</html>

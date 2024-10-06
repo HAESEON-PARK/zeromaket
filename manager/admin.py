@@ -1,7 +1,7 @@
 # admin.py
 from django.contrib import admin
 from .models import (
-    UserJobType, Users, Wholesalers, TotalProducts, ProductCodes,
+    UserJobType, Users, Wholesaler, TotalProducts, ProductCodes,
     Buyer, Customer, Quotations, ValidationLogs, SyncLogs,
     Products, SaleProducts
 )
@@ -9,7 +9,7 @@ from .models import (
 # 모든 모델을 관리자 페이지에 등록
 admin.site.register(UserJobType)
 admin.site.register(Users)
-admin.site.register(Wholesalers)
+admin.site.register(Wholesaler)
 admin.site.register(TotalProducts)
 admin.site.register(ProductCodes)
 admin.site.register(Buyer)

@@ -2,14 +2,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Delete Buyer</title>
+    <title>Delete Wholesaler</title>
 </head>
 <body>
-    <h1>Are you sure you want to delete {{ buyer.company_name }}?</h1>
+    <h1>Are you sure you want to delete {{ wholesaler.company_name }}?</h1>
     <form method="post">
         {% csrf_token %}
         <button type="submit">Yes, delete</button>
     </form>
-    <a href="{% url 'buyer_list' %}">Cancel</a>
+    <a href="{% url 'wholesaler_list' %}">Cancel</a>
 </body>
 </html>
