@@ -18,14 +18,14 @@ urlpatterns = [
 urlpatterns = [
     path('', views.index, name='manager_index'),
     path('users/', views.user_list, name='user_list'),
-    path('users/create/', views.user_create, name='user_create'),  # 사용자 추가 URL 정의
+    path('add_user/', views.add_user, name='add_user'),  # 사용자 추가 URL 정의
 ]
 
-# 용자 수정 기능 (Update)
+# 사용자 수정 기능 (Update)
 urlpatterns = [
     path('', views.index, name='manager_index'),
     path('users/', views.user_list, name='user_list'),
-    path('users/add/', views.add_user, name='add_user'),
+    path('add_user/', views.add_user, name='add_user'),
     path('users/edit/<int:user_id>/', views.edit_user, name='edit_user'),  # 사용자 수정 URL
 ]
 
@@ -33,8 +33,22 @@ urlpatterns = [
 urlpatterns = [
     path('', views.index, name='manager_index'),
     path('users/', views.user_list, name='user_list'),
-    path('users/add/', views.add_user, name='add_user'),
+    path('add_user/', views.add_user, name='add_user'),
     path('users/edit/<int:user_id>/', views.edit_user, name='edit_user'),
     path('users/delete/<int:user_id>/', views.delete_user, name='delete_user'),  # 사용자 삭제 URL
+]
+
+
+# Wholesalers 모델 CRUD 구현
+urlpatterns = [
+    path('', views.index, name='manager_index'),
+    path('users/', views.user_list, name='user_list'),
+    path('users/create/', views.add_user, name='add_user'),
+    # Wholesaler 관련 URL
+    path('wholesalers/', views.wholesaler_list, name='wholesaler_list'),
+    path('wholesalers/create/', views.wholesaler_create, name='wholesaler_create'),
+    path('wholesalers/<int:pk>/', views.wholesaler_detail, name='wholesaler_detail'),
+    path('wholesalers/<int:pk>/update/', views.wholesaler_update, name='wholesaler_update'),
+    path('wholesalers/<int:pk>/delete/', views.wholesaler_delete, name='wholesaler_delete'),
 ]
 
