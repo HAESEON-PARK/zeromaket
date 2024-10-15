@@ -1,0 +1,19 @@
+<h2>도매상 목록</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>회사명</th>
+        <th>승인 상태</th>
+        <th>영업 상태</th>
+        <!-- 기타 필드 -->
+    </tr>
+    {% for wholesaler in wholesalers %}
+    <tr>
+        <td>{{ wholesaler.id }}</td>
+        <td>{{ wholesaler.company_name }}</td>
+        <td>{{ wholesaler.get_approve_status_display }}</td>
+        <td>{{ wholesaler.get_status_display }}</td>
+        <!-- 기타 필드 -->
+    </tr>
+    {% endfor %}
+</table>

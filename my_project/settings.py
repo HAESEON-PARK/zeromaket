@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,12 +21,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^b19d_mh#)1%&5ds7(4p&(g2x@54!zrtr&q2&t*l=x#u^8ci$@'
+SECRET_KEY = config('django-insecure-8@p8-^_#l2__bxl9)pk@kl0&8b1#vs0n7jj&_z-3ko7ume4x-e', default='your-default-secret-key')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 
 # Application definition
@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'manager',
+    'management',
+    
 ]
 
 MIDDLEWARE = [
@@ -76,12 +77,15 @@ WSGI_APPLICATION = 'my_project.wsgi.application'
 
 DATABASES = {
     'default': {
-         'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'postgres',          # Supabase에서 제공하는 DB 이름
         'USER': 'postgres.keubjfmnxnrhhycprkfk',          # Supabase에서 제공하는 DB 사용자명
         'PASSWORD': 'Qkrgotjs@3483',  # Supabase에서 제공하는 DB 비밀번호
         'HOST': 'aws-0-ap-northeast-2.pooler.supabase.com',          # Supabase에서 제공하는 DB 호스트
         'PORT': '6543',
+        'OPTIONS': {
+            'sslmode': 'disable',
+        },
     }
 }
 
@@ -165,21 +169,6 @@ logger.info(f"INSTALLED_APPS: {INSTALLED_APPS}")
 
 
 # 비밀번호 정보 분리
-from decouple import config
-
-SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', default=False, cast=bool)
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
-    }
-}
 
 EMAIL_HOST = config('EMAIL_HOST')
 EMAIL_PORT = config('EMAIL_PORT', cast=int)
@@ -188,3 +177,6 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
 
 KAKAO_API_KEY = config('KAKAO_API_KEY')
+
+
+AUTH_USER_MODEL = 'management.Users' 

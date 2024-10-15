@@ -1,0 +1,41 @@
+<!-- registration/register.html -->
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div>
+        {{ form.email.label_tag }}
+        {{ form.email }}
+        {{ form.email.errors }}
+    </div>
+    <div>
+        {{ form.name.label_tag }}
+        {{ form.name }}
+        {{ form.name.errors }}
+    </div>
+    <div>
+        {{ form.phone.label_tag }}
+        {{ form.phone }}
+        {{ form.phone.errors }}
+    </div>
+    <div>
+        {{ form.password1.label_tag }}
+        {{ form.password1 }}
+        {{ form.password1.errors }}
+    </div>
+    <div>
+        {{ form.password2.label_tag }}
+        {{ form.password2 }}
+        {{ form.password2.errors }}
+    </div>
+    <div>
+        {{ form.job_wholesaler.label_tag }}
+        {{ form.job_wholesaler }}
+        {{ form.job_wholesaler.errors }}
+    </div>
+    <div>
+        {{ form.job_buyer.label_tag }}
+        {{ form.job_buyer }}
+        {{ form.job_buyer.errors }}
+    </div>
+    <button type="submit">가입하기</button>
+</form>

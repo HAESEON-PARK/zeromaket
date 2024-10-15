@@ -18,10 +18,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
-from manager import views  # manager 앱의 views 파일에서 home 뷰를 가져옵니다.
+from management import views  # management 앱의 views 파일에서 home 뷰를 가져옵니다.
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('manager/', include('manager.urls')),  # manager 앱 URL 포함
+    path('management/', include('management.urls')),  # management 앱 URL 포함
     path('', views.home, name='home'),  # 루트 경로 추가
 ]
