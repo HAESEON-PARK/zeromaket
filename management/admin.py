@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth import get_user_model
 from .forms import UserCreateForm, UserChangeForm
-from .models import Wholesaler, Buyer, Customer, ProductCodes, TotalProducts, Quotations, ValidationLogs, SyncLogs, Products, SaleProducts
+from .models import Users, Wholesaler, Buyer, Customer, ProductCodes, TotalProducts, Quotations, ValidationLogs, SyncLogs, Products, SaleProducts, BusinessApproveStatusChoices
 
 Users = get_user_model()
 
@@ -16,17 +16,30 @@ class UsersAdmin(BaseUserAdmin):
 
     list_display = (
         'id', 'email', 'name', 'phone', 'job_wholesaler', 'job_buyer',
-        'affiliation_type', 'affiliation_id',
+        'affiliation_status', 'affiliation_id',
         'is_staff', 'is_active', 'created_at', 'updated_at'
     )
-    list_filter = ('is_staff', 'is_active', 'job_wholesaler', 'job_buyer', 'affiliation_type')
+    list_filter = ('is_staff', 'is_active', 'job_wholesaler', 'job_buyer', 'affiliation_status')
     search_fields = ('email', 'name', 'phone')
     ordering = ('-created_at',)
     readonly_fields = ('created_at', 'updated_at')
 
+    actions = ['approve_users', 'reject_users']
+
+    def approve_users(self, request, queryset):
+        queryset.update(affiliation_status=BusinessApproveStatusChoices.APPROVE)
+        self.message_user(request, "선택된 사용자를 승인하였습니다.")
+    approve_users.short_description = "선택된 사용자를 승인합니다"
+
+    def reject_users(self, request, queryset):
+        queryset.update(affiliation_status=BusinessApproveStatusChoices.REJECT)
+        self.message_user(request, "선택된 사용자를 거절하였습니다.")
+    reject_users.short_description = "선택된 사용자를 거절합니다"
+
+
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
-        ('Personal Info', {'fields': ('name', 'phone', 'job_wholesaler', 'job_buyer', 'affiliation_type', 'affiliation_id')}),
+        ('Personal Info', {'fields': ('name', 'phone', 'job_wholesaler', 'job_buyer', 'affiliation_status', 'affiliation_id')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'created_at', 'updated_at')}),
     )
@@ -59,6 +72,8 @@ class UsersAdmin(BaseUserAdmin):
 
 
 # Wholesaler 관리자 설정
+
+
 @admin.register(Wholesaler)
 class WholesalerAdmin(admin.ModelAdmin):
     list_display = (
@@ -77,14 +92,15 @@ class WholesalerAdmin(admin.ModelAdmin):
     actions = ['approve_wholesalers', 'reject_wholesalers']
 
     def approve_wholesalers(self, request, queryset):
-        queryset.update(approve_status='approved')
+        queryset.update(approve_status=BusinessApproveStatusChoices.APPROVE)
         self.message_user(request, "선택된 도매상을 승인하였습니다.")
     approve_wholesalers.short_description = "선택된 도매상을 승인합니다"
 
     def reject_wholesalers(self, request, queryset):
-        queryset.update(approve_status='rejected')
+        queryset.update(approve_status=BusinessApproveStatusChoices.REJECT)
         self.message_user(request, "선택된 도매상을 거절하였습니다.")
     reject_wholesalers.short_description = "선택된 도매상을 거절합니다"
+
 
 
 # Buyer 관리자 설정

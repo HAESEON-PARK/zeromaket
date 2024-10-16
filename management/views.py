@@ -1,9 +1,13 @@
+from logging import Manager
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login
 from .forms import UserCreateForm, WholesalerForm, BuyerForm, CustomerForm, TotalProductsForm
-from .models import Users, Wholesaler, Buyer, Customer, TotalProducts
+from .models import AFFILIATION_STATUS_CHOICES, AffiliationMembers, AffiliationStatusChoices, District, Users, Wholesaler, Buyer, Customer, TotalProducts
+from django.db.models import Q
 
 
 def index(request):
@@ -181,6 +185,104 @@ def reject_buyer(request, pk):
     buyer.save()
     # 거절 알림 등을 추가할 수 있습니다.
     return redirect('buyer_admin')
+
+
+
+
+# business_registration_number로 회사를 검색하고 가입 요청
+
+def request_affiliation(request):
+    if request.method == 'POST':
+        business_registration_number = request.POST.get('business_registration_number')
+        role = request.POST.get('role')  # 'delivery_manager' 또는 'internal_manager'
+
+        try:
+            company = Wholesaler.objects.get(business_registration_number=business_registration_number)
+            affiliation_request, created = AffiliationMembers.objects.get_or_create(
+                user=request.user,
+                company=company,
+                defaults={'role': role}
+            )
+            if not created:
+                messages.info(request, '이미 가입 요청을 보냈습니다.')
+            else:
+                messages.success(request, '가입 요청이 성공적으로 전송되었습니다.')
+        except Wholesaler.DoesNotExist:
+            messages.error(request, '해당 사업자 등록번호를 가진 회사를 찾을 수 없습니다.')
+
+        return redirect('some_page')
+    else:
+        return render(request, 'request_affiliation.html')
+
+
+
+# Wholesaler가 가입 요청 승인/거절
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def manage_affiliation_requests(request):
+    company = request.user.wholesaler
+    requests = company.affiliation_requests.filter(status=AFFILIATION_STATUS_CHOICES.PENDING)
+
+    if request.method == 'POST':
+        action = request.POST.get('action')  # 'approve' 또는 'reject'
+        request_id = request.POST.get('request_id')
+        assigned_areas_ids = request.POST.getlist('assigned_areas')  # 할당할 지역 IDs
+
+        affiliation_request = AffiliationMembers.objects.get(id=request_id, company=company)
+
+        if action == 'approve':
+            assigned_areas = District.objects.filter(id__in=assigned_areas_ids)
+            if not assigned_areas.exists():
+                messages.error(request, '최소 한 개 이상의 지역을 선택해야 합니다.')
+                return redirect('manage_affiliation_requests')
+
+            affiliation_request.status = AFFILIATION_STATUS_CHOICES.APPROVED
+            affiliation_request.approved_at = timezone.now()
+            affiliation_request.save()
+
+            # Manager 프로필 생성
+            manager, created = Manager.objects.get_or_create(
+                user=affiliation_request.user,
+                company=company,
+                role=affiliation_request.role
+            )
+            manager.assigned_areas.set(assigned_areas)
+            manager.save()
+
+            messages.success(request, f"{affiliation_request.user.email} 님의 가입 요청을 승인하였습니다.")
+        elif action == 'reject':
+            affiliation_request.status = AFFILIATION_STATUS_CHOICES.REJECTED
+            affiliation_request.save()
+            messages.info(request, f"{affiliation_request.user.email} 님의 가입 요청을 거절하였습니다.")
+
+        return redirect('manage_affiliation_requests')
+
+    else:
+        return render(request, 'manage_affiliation_requests.html', {'requests': requests})
+
+
+# Buyer의 Wholesaler 검색 기능 구현
+
+
+# views.py
+
+def search_wholesalers(request):
+    buyer = request.user.buyer
+    district = buyer.district
+
+    if district:
+        wholesalers = Wholesaler.objects.filter(
+            service_areas=district,
+            approve_status='approve',
+            status='open'
+        ).distinct()
+    else:
+        wholesalers = Wholesaler.objects.none()  # district가 없는 경우 빈 queryset 반환
+
+    return render(request, 'wholesaler_list.html', {'wholesalers': wholesalers})
+
 
 
 

@@ -15,8 +15,8 @@ USER_JOB_TYPE_CHOICES = [
 AFFILIATION_STATUS_CHOICES = [
     ('pending', 'Pending'),
     ('approved', 'Approved'),
-    ('on', 'On'),
-    ('off', 'Off'),
+    ('reject', 'Reject'),
+    
 ]
 
 MANAGER_ROLE_CHOICES = [
@@ -75,14 +75,64 @@ SYNC_STATUS_CHOICES = [
     ('Failure', 'Failure'),
 ]
 
-# 모델 정의
-class UserJobType(models.Model):
-    job_name = models.CharField(max_length=50, unique=True, choices=USER_JOB_TYPE_CHOICES)
+
+# 지역 model 정의
+
+class Country(models.Model):
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True)
 
     def __str__(self):
-        return self.job_name
+        return self.name
 
-# 커스텀 유저    
+class City(models.Model):
+    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='cities')
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class District(models.Model):
+    city = models.ForeignKey(City, on_delete=models.CASCADE, related_name='districts')
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.name
+    
+class Neighborhood(models.Model):
+    districts = models.ForeignKey(City, on_delete=models.CASCADE, related_name='neighborhood')
+    name = models.CharField(max_length=100)
+    code = models.CharField(max_length=10, unique=True)
+
+    def __str__(self):
+        return self.name    
+
+# 필요한 경우  Areas 모델도 정의할 수 있습니다.
+
+class AffiliationStatusChoices(models.TextChoices):
+    PENDING = 'pending', 'Pending'
+    APPROVED = 'approved', 'Approved'
+    REJECTED = 'rejected', 'Rejected'
+
+class ManagerRoleChoices(models.TextChoices):
+    DELIVERY_MANAGER = 'delivery_manager', 'Delivery Manager'
+    INTERNAL_MANAGER = 'internal_manager', 'Internal Manager'
+
+
+    
+
+class BusinessApproveStatusChoices(models.TextChoices):
+    APPROVE = 'approve', 'Approve'
+    REJECT = 'reject', 'Reject'
+    HOLD = 'hold', 'Hold'
+    PENDING = 'pending', 'Pending'
+
+
+
+
+# CustomUserManager 정의
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, name, password=None, **extra_fields):
         if not email:
@@ -106,18 +156,31 @@ class CustomUserManager(BaseUserManager):
 
 
 
+# Users 모델 정의
 class Users(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, max_length=255)
     name = models.CharField(unique=True, max_length=100)
     phone = models.CharField(unique=True, max_length=20, null=True, blank=True)
+
     job_wholesaler = models.BooleanField(default=False)
     job_buyer = models.BooleanField(default=False)
-    affiliation_type = models.CharField(max_length=50, null=True, blank=True)
+    job_customer = models.BooleanField(default=False)
+    job_manager = models.BooleanField(default=False)
+
+    affiliation_status = models.CharField(
+        max_length=50,
+        choices=AffiliationStatusChoices.choices,
+        default=AffiliationStatusChoices.PENDING,
+        null=True, blank=True
+    )
     affiliation_id = models.IntegerField(null=True, blank=True)
+    affiliation_name = models.CharField(max_length=255, null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+
     objects = CustomUserManager()
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
@@ -129,34 +192,48 @@ class Users(AbstractBaseUser, PermissionsMixin):
         creating = self.pk is None
         super().save(*args, **kwargs)  # 먼저 Users 인스턴스를 저장합니다.
 
-        # Customer 프로필 생성 또는 업데이트
-        customer, created = Customer.objects.get_or_create(user=self)
-        customer.name = self.name
-        customer.phone = self.phone
-        customer.email = self.email
-        customer.save()
+        # 필요한 모델 임포트 (순환 임포트 방지)
+        from .models import Customer, Wholesaler, Buyer
+
+        # Customer 프로필 생성 또는 삭제
+        if self.job_customer:
+            customer, created = Customer.objects.get_or_create(user=self)
+            customer.name = self.name
+            customer.phone = self.phone
+            customer.email = self.email
+            customer.save()
+        else:
+            Customer.objects.filter(user=self).delete()
 
         # Wholesaler 프로필 생성 또는 삭제
         if self.job_wholesaler:
             wholesaler, created = Wholesaler.objects.get_or_create(user=self)
-            if created:
-                wholesaler.approve_status = 'pending'
-                wholesaler.status = 'close'  # 초기 상태 설정
+            if created or not wholesaler.company_name:
                 wholesaler.company_name = self.name  # 기본값 설정
-                wholesaler.save()
+            if not wholesaler.approve_status:
+                wholesaler.approve_status = BusinessApproveStatusChoices.PENDING
+            if not wholesaler.status:
+                wholesaler.status = BUSINESS_STATUS_CHOICES.CLOSE  # 초기 상태 설정
+            wholesaler.save()
         else:
             Wholesaler.objects.filter(user=self).delete()
 
         # Buyer 프로필 생성 또는 삭제
         if self.job_buyer:
             buyer, created = Buyer.objects.get_or_create(user=self)
-            if created:
-                buyer.approve_status = 'pending'
-                buyer.status = 'close'  # 초기 상태 설정
+            if created or not buyer.company_name:
                 buyer.company_name = self.name  # 기본값 설정
-                buyer.save()
+            if not buyer.approve_status:
+                buyer.approve_status = BusinessApproveStatusChoices.PENDING
+            if not buyer.status:
+                buyer.status =BUSINESS_STATUS_CHOICES.CLOSE  # 초기 상태 설정
+            buyer.save()
         else:
             Buyer.objects.filter(user=self).delete()
+
+    # 필요한 경우 clean 메서드에서 최소 하나의 직무 선택 여부 검증 가능
+
+
 
 
 
@@ -170,8 +247,14 @@ class Wholesaler(models.Model):
     bank_account = models.CharField(max_length=100, null=True, blank=True)
     manager_name = models.CharField(max_length=100, null=True, blank=True)
     manager_phone = models.CharField(max_length=20, null=True, blank=True)
-    area = models.CharField(max_length=255, null=True, blank=True)
+    service_areas = models.ManyToManyField(District, related_name='wholesalers', blank=True)
+    max_service_areas = 15  # 최대 지역 수 제한
     reliability_score = models.IntegerField(default=100)
+    approve_status = models.CharField(
+        max_length=50,
+        choices=BusinessApproveStatusChoices.choices,
+        default=BusinessApproveStatusChoices.PENDING,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -180,17 +263,18 @@ class Wholesaler(models.Model):
         max_length=50,
         choices=BUSINESS_STATUS_CHOICES,
         default='close'
-    )  # 상태
+    )
 
     # 승인 상태 필드 추가
     approve_status = models.CharField(
         max_length=50,
         choices=BUSINESS_APPROVE_STATUS_CHOICES,
         default='pending'
-    )  # 승인 상태
+    )
 
     def __str__(self):
         return self.company_name
+
 
 
 
@@ -227,12 +311,38 @@ class ProductCodes(models.Model):
 
     def __str__(self):
         return f"Product Code {self.id}"
+    
+
+
+class AffiliationMembers(models.Model):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE, related_name='affiliations')
+    company = models.ForeignKey(Wholesaler, on_delete=models.CASCADE, related_name='affiliation_requests')
+    status = models.CharField(
+        max_length=20,
+        choices=AffiliationStatusChoices.choices,
+        default=AffiliationStatusChoices.PENDING
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    role = models.CharField(
+        max_length=20,
+        choices=ManagerRoleChoices.choices,
+        default=ManagerRoleChoices.DELIVERY_MANAGER
+    )
+    assigned_areas = models.ManyToManyField(District, related_name='assigned_members', blank=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.company.company_name}"
+
+
+
 
 class Buyer(models.Model):
     user = models.OneToOneField(Users, on_delete=models.CASCADE, related_name='buyer')
     company_name = models.CharField(max_length=255)
     company_phone = models.CharField(max_length=20, null=True, blank=True)
     company_address = models.CharField(max_length=255, null=True, blank=True)
+    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True, blank=True, related_name='buyer_districts')
     email = models.EmailField(null=True, blank=True)
     kakao_id = models.CharField(max_length=100, null=True, blank=True)
     services = models.TextField(null=True, blank=True)
@@ -250,20 +360,35 @@ class Buyer(models.Model):
     status = models.CharField(
         max_length=50,
         choices=BUSINESS_STATUS_CHOICES,
-        default='open'
-    )  # 상태
+        default='closed'
+    )
 
     # 승인 상태 필드 추가
     approve_status = models.CharField(
         max_length=50,
         choices=BUSINESS_APPROVE_STATUS_CHOICES,
         default='pending'
-    )  # 승인 상태
+    )
 
     def __str__(self):
         return self.company_name
 
+    def get_district(self):
+        if self.company_address:
+            # 주소를 쉼표(,)로 분리한다고 가정
+            parts = self.company_address.split(',')
+            if len(parts) >= 2:
+                district_name = parts[-2].strip()  # 끝에서 두 번째 요소를 district로 간주
+                try:
+                    district = District.objects.get(name=district_name)
+                    return district
+                except District.DoesNotExist:
+                    return None
+        return None
 
+
+
+from django.utils import timezone
 
 class Customer(models.Model):
     user = models.OneToOneField(Users, on_delete=models.CASCADE, related_name='customer')
@@ -281,6 +406,27 @@ class Customer(models.Model):
 
     def __str__(self):
         return self.name if self.name else 'Customer ' + str(self.id)
+    
+
+class Manager(models.Model):
+    user = models.OneToOneField(Users, on_delete=models.CASCADE, related_name='manager_profile')
+    company = models.ForeignKey(Wholesaler, on_delete=models.CASCADE, related_name='managers')
+    role = models.CharField(
+        max_length=20,
+        choices=ManagerRoleChoices.choices
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=AffiliationStatusChoices.choices,
+        default=AffiliationStatusChoices.APPROVED
+    )
+    assigned_areas = models.ManyToManyField(District, related_name='managers', blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.role}"
+
+
 
 class Quotations(models.Model):
     buyer = models.ForeignKey(Buyer, on_delete=models.CASCADE, null=True, blank=True)
